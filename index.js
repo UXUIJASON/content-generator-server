@@ -8,7 +8,18 @@ const config = require('./config');
 const app = express();
 
 // CORS 설정 수정 부분 [START]
-app.use(cors());  // 모든 출처 허용
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  
+  // preflight request 처리
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
+});
+
 // CORS 설정 수정 부분 [END]
 
 app.use(express.json());
