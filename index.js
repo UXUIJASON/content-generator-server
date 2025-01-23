@@ -10,8 +10,9 @@ const app = express();
 const corsOptions = {
  origin: 'https://content-generator-omega.vercel.app',
  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
- allowedHeaders: ['Content-Type'],
- optionsSuccessStatus: 200
+ preflightContinue: false,
+ optionsSuccessStatus: 204,
+ credentials: true
 };
 
 app.use(cors(corsOptions));
