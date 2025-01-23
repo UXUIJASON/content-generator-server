@@ -1,11 +1,13 @@
 const express = require('express');
 const cors = require('cors');
+const multer = require('multer');
 const collector = require('./services/collector');
 const analyzer = require('./services/analyzer');
 const rewriter = require('./services/rewriter');
 const config = require('./config');
 
 const app = express();
+const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(cors({
  origin: 'http://localhost:3000',
@@ -20,9 +22,10 @@ app.get('/', (req, res) => {
  res.send('Content Generator Server is running');
 });
 
-app.post('/api/analyze', async (req, res) => {
+app.post('/api/analyze', upload.array('images', 10), async (req, res) => {
 try {
  const { topic, searchRange, keywords, requiredContent } = req.body;
+ const images = req.files;
  
  if (!topic) {
    return res.status(400).json({
@@ -31,20 +34,28 @@ try {
    });
  }
 
- console.log('Received request:', { topic, searchRange, keywords, requiredContent });
+ console.log('Received request:', { 
+   topic, 
+   searchRange, 
+   keywords: JSON.parse(keywords), 
+   requiredContent,
+   imageCount: images?.length 
+ });
 
  const collectedData = await collector.collectData(topic, searchRange);
- collectedData.keywords = keywords;
+ collectedData.keywords = JSON.parse(keywords);
  collectedData.requiredContent = requiredContent;
+ collectedData.images = images;
 
  console.log('Starting content analysis...');
  const { originalContent } = await analyzer.analyzeContent(collectedData);
 
  console.log('Starting content rewriting...');
  const rewrittenContents = await rewriter.rewriteContent(originalContent, {
-   keywords,
+   keywords: JSON.parse(keywords),
    requiredContent,
-   topic
+   topic,
+   images
  });
 
  res.json({
