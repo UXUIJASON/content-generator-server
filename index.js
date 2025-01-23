@@ -7,10 +7,15 @@ const config = require('./config');
 
 const app = express();
 
-// CORS 설정 수정 부분 [START]
-app.use(cors());
-app.options('*', cors());
-// CORS 설정 수정 부분 [END]
+const corsOptions = {
+ origin: 'https://content-generator-omega.vercel.app',
+ methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+ allowedHeaders: ['Content-Type'],
+ optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 app.use(express.json());
 
@@ -22,47 +27,47 @@ res.send('Content Generator Server is running');
 
 app.post('/api/analyze', async (req, res) => {
 try {
-  const { topic, searchRange, keywords, requiredContent } = req.body;
-  
-  if (!topic) {
-    return res.status(400).json({
-      error: true,
-      message: '주제가 입력되지 않았습니다.'
-    });
-  }
+ const { topic, searchRange, keywords, requiredContent } = req.body;
+ 
+ if (!topic) {
+   return res.status(400).json({
+     error: true,
+     message: '주제가 입력되지 않았습니다.'
+   });
+ }
 
-  console.log('Received request:', { topic, searchRange, keywords, requiredContent });
+ console.log('Received request:', { topic, searchRange, keywords, requiredContent });
 
-  // 1. 자료 수집
-  console.log('Starting data collection...');
-  const collectedData = await collector.collectData(topic, searchRange);
-  // 키워드와 필수 내용 추가
-  collectedData.keywords = keywords;
-  collectedData.requiredContent = requiredContent;
+ // 1. 자료 수집
+ console.log('Starting data collection...');
+ const collectedData = await collector.collectData(topic, searchRange);
+ // 키워드와 필수 내용 추가
+ collectedData.keywords = keywords;
+ collectedData.requiredContent = requiredContent;
 
-  // 2. 내용 분석
-  console.log('Starting content analysis...');
-  const { originalContent } = await analyzer.analyzeContent(collectedData);
+ // 2. 내용 분석
+ console.log('Starting content analysis...');
+ const { originalContent } = await analyzer.analyzeContent(collectedData);
 
-  // 3. 컨텐츠 재작성
-  console.log('Starting content rewriting...');
-  const rewrittenContents = await rewriter.rewriteContent(originalContent, {
-    keywords,
-    requiredContent,
-    topic
-  });
+ // 3. 컨텐츠 재작성
+ console.log('Starting content rewriting...');
+ const rewrittenContents = await rewriter.rewriteContent(originalContent, {
+   keywords,
+   requiredContent,
+   topic
+ });
 
-  res.json({
-    originalContent,
-    rewrittenContents
-  });
+ res.json({
+   originalContent,
+   rewrittenContents
+ });
 
 } catch (error) {
-  console.error('API Error:', error);
-  res.status(500).json({
-    error: true,
-    message: error.message
-  });
+ console.error('API Error:', error);
+ res.status(500).json({
+   error: true,
+   message: error.message
+ });
 }
 });
 
