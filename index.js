@@ -8,11 +8,7 @@ const config = require('./config');
 const app = express();
 
 // CORS 설정 수정 부분 [START]
-app.use(cors({
-  origin: ['https://content-generator-omega.vercel.app', 'http://localhost:3000'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
-}));
+app.use(cors());  // 모든 출처 허용
 // CORS 설정 수정 부분 [END]
 
 app.use(express.json());
