@@ -8,7 +8,7 @@ const config = require('./config');
 const app = express();
 
 app.use(cors({
- origin: 'https://content-generator-omega.vercel.app',
+ origin: 'http://localhost:3000',
  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
  allowedHeaders: ['Content-Type'],
  credentials: true
