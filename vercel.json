@@ -1,9 +1,24 @@
 {
-    "routes": [
+    "headers": [
       {
-        "src": "/api/(.*)",
-        "methods": ["OPTIONS"],
-        "dest": "/api/$1"
+        "source": "/(.*)",
+        "headers": [
+          {
+            "key": "Access-Control-Allow-Origin",
+            "value": "https://content-generator-omega.vercel.app"
+          },
+          {
+            "key": "Access-Control-Allow-Methods",
+            "value": "OPTIONS,GET,POST,PUT,DELETE"
+          },
+          {
+            "key": "Access-Control-Allow-Headers",
+            "value": "*"
+          }
+        ]
       }
+    ],
+    "rewrites": [
+      { "source": "/(.*)", "destination": "/api/$1" }
     ]
   }
