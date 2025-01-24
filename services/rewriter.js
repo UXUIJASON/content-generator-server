@@ -29,57 +29,78 @@ class ContentRewriter {
  }
 
  async generateVersion(originalContent, versionNumber, data) {
-   const messages = [{
-     role: 'user',
-     content: this.buildRewritePrompt(originalContent, versionNumber, data)
-   }];
-
-   if (data.images && data.images.length > 0) {
-     data.images.forEach(img => {
-       messages.push({
-         role: "user",
-         content: [{
-           type: "image",
-           source: {
-             type: "base64",
-             media_type: img.mimetype,
-             data: img.buffer.toString('base64')
-           }
-         }]
-       });
-     });
-   }
+  const messages = [{
+    role: 'user',
+    content: this.buildRewritePrompt(originalContent, versionNumber, data)
+  }];
+  if (data.images && data.images.length > 0) {
+    data.images.forEach(img => {
+      messages.push({
+        role: "user",
+        content: [{
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: img.mimetype,
+            data: img.buffer.toString('base64')
+          }
+        }]
+      });
+    });
+  }
    
-   const response = await this.client.messages.create({
-     model: 'claude-3-sonnet-20240229',
-     max_tokens: 4096,
-     messages: messages
-   });
+  let attempts = 0;
+  const maxAttempts = 10;
+  let longestContent = '';
+  while (attempts < maxAttempts) {
+    const response = await this.client.messages.create({
+      model: 'claude-3-sonnet-20240229',
+      max_tokens: 4096,
+      messages: messages
+    });
+    const content = response.content[0].text;
+    const charCount = content.replace(/\s/g, '').length;
+    if (charCount >= 1500) {
+      return {
+        text: content,
+        version: versionNumber
+      };
+    }
+    if (content.length > longestContent.length) {
+      longestContent = content;
+    }
+    attempts++;
+  }
+  console.warn('Required character count not met after maximum attempts. Returning the longest generated content.');
+  return {
+    text: longestContent,
+    version: versionNumber
+  };
+}
 
-   return {
-     text: response.content[0].text,
-     version: versionNumber
-   };
- }
-
- buildRewritePrompt(content, version, data) {
-   return `다음 글을 재작성해주세요.
-
-필수 포함 키워드:
-${data.keywords?.length > 0 ? data.keywords.map(keyword => `- ${keyword}`).join('\n') : '(없음)'}
-
-필수 포함 내용:
-${data.requiredContent ? data.requiredContent : '(없음)'}
-
-${data.images && data.images.length > 0 ? `
-업로드된 이미지가 ${data.images.length}개 있습니다. 각 이미지의 내용을 분석하여 글에 자연스럽게 통합해주세요.
-` : ''}
-
-원본 글:
-${content}
+  buildRewritePrompt(content, version, data) {
+  return `다음 글을 재작성해주세요.
+ 
+ 필수 포함 키워드:
+ ${data.keywords?.length > 0 ? data.keywords.map(keyword => `- ${keyword}`).join('\n') : '(없음)'}
+ 
+ 필수 포함 내용:
+ ${data.requiredContent ? data.requiredContent : '(없음)'}
+ 
+ ${data.additionalPrompt ? `
+ 추가 작성 지침:
+ ${data.additionalPrompt}
+ ` : ''}
+ 
+ ${data.images && data.images.length > 0 ? `
+ 업로드된 이미지가 ${data.images.length}개 있습니다. 각 이미지의 내용을 분석하여 글에 자연스럽게 통합해주세요.
+ ` : ''}
+ 
+ 원본 글:
+ ${content}
 
 재작성 지침:
-1. 글자 수는 반드시 2000자 이상으로 작성해주세요.
+1. 글자 수는 반드시 공백을 제외하고 1200자 이상으로 작성해주세요. 글자 수 미달 시 생성된 콘텐츠는 반려됩니다.
 2. 위에 명시된 필수 키워드들을 자연스럽게 모두 포함해야 합니다.
 3. 필수 포함 내용을 반드시 다루어야 합니다.
 4. 이미지가 있다면 이미지의 내용을 자연스럽게 설명하고 관련 내용을 포함해야 합니다.

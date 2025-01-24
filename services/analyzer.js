@@ -56,30 +56,35 @@ class ContentAnalyzer {
  }
 
  buildAnalysisPrompt(data) {
-   if (!data || !Array.isArray(data.content)) {
-     throw new Error('Invalid data format for analysis');
-   }
-
-   const prompt = `
-주제: ${data.content[0]?.title || '제목 없음'}
-
-필수 포함 키워드:
-${data.keywords?.length > 0 ? data.keywords.map(keyword => `- ${keyword}`).join('\n') : '(없음)'}
-
-필수 포함 내용:
-${data.requiredContent ? data.requiredContent : '(없음)'}
-
-${data.images && data.images.length > 0 ? `
-업로드된 이미지가 ${data.images.length}개 있습니다. 각 이미지의 내용을 분석하여 글에 자연스럽게 통합해주세요.
-` : ''}
-
-다음 자료를 바탕으로 블로그 포스팅을 작성해주세요:
-
-${data.content.map(item => `
-[출처: ${item.source}]
-${item.content}
----
-`).join('\n')}
+  if (!data || !Array.isArray(data.content)) {
+    throw new Error('Invalid data format for analysis');
+  }
+ 
+  const prompt = `
+ 주제: ${data.content[0]?.title || '제목 없음'}
+ 
+ 필수 포함 키워드:
+ ${data.keywords?.length > 0 ? data.keywords.map(keyword => `- ${keyword}`).join('\n') : '(없음)'}
+ 
+ 필수 포함 내용:
+ ${data.requiredContent ? data.requiredContent : '(없음)'}
+ 
+ ${data.additionalPrompt ? `
+ 추가 작성 지침:
+ ${data.additionalPrompt}
+ ` : ''}
+ 
+ ${data.images && data.images.length > 0 ? `
+ 업로드된 이미지가 ${data.images.length}개 있습니다. 각 이미지의 내용을 분석하여 글에 자연스럽게 통합해주세요.
+ ` : ''}
+ 
+ 다음 자료를 바탕으로 블로그 포스팅을 작성해주세요:
+ 
+ ${data.content.map(item => `
+ [출처: ${item.source}]
+ ${item.content}
+ ---
+ `).join('\n')}
 
 작성 지침:
 1. 글자 수는 반드시 2000자 이상으로 작성해주세요.
